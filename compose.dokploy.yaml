@@ -47,6 +47,8 @@ services:
     command: ["./CLIProxyAPI", "-config", "/config/config.yaml"]
     expose:
       - "8317"
+    ports:
+      - "127.0.0.1:51121:51121"
     volumes:
       - cpa-config:/config
       - cpa-auths:/root/.cli-proxy-api

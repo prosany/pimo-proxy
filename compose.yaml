@@ -1,0 +1,41 @@
+name: pimo-proxy
+
+services:
+  cli-proxy-api:
+    image: eceasy/cli-proxy-api:v8.0.64
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8317:8317"
+      - "127.0.0.1:1455:1455"
+      - "127.0.0.1:8085:8085"
+      - "127.0.0.1:54545:54545"
+      - "127.0.0.1:51121:51121"
+      - "127.0.0.1:11451:11451"
+    volumes:
+      - ./cpa/config.yaml:/CLIProxyAPI/config.yaml
+      - ./cpa/auths:/root/.cli-proxy-api
+      - ./cpa/logs:/CLIProxyAPI/logs
+      - ./cpa/static:/CLIProxyAPI/static
+      - ./cpa/plugins:/CLIProxyAPI/plugins
+
+  cpa-usage-keeper:
+    image: ghcr.io/willxup/cpa-usage-keeper:v2.1.0
+    restart: unless-stopped
+    depends_on:
+      - cli-proxy-api
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      TZ: ${TZ:-UTC}
+      CPA_BASE_URL: http://cli-proxy-api:8317
+      CPA_PUBLIC_URL: http://127.0.0.1:8317
+      CPA_MANAGEMENT_KEY: ${CPA_MANAGEMENT_KEY:?Run python3 scripts/setup.py first}
+      REDIS_QUEUE_ADDR: cli-proxy-api:8317
+      AUTH_ENABLED: "true"
+      LOGIN_PASSWORD: ${KEEPER_LOGIN_PASSWORD:?Run python3 scripts/setup.py first}
+      WORK_DIR: /data
+      BACKUP_ENABLED: "true"
+      BACKUP_INTERVAL: 24h
+      BACKUP_RETENTION_DAYS: "7"
+    volumes:
+      - ./keeper:/data

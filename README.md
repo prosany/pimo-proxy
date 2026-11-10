@@ -78,6 +78,37 @@ reachable server/domain with HTTPS.
 
 ## Operations and storage
 
+### Dokploy deployment
+
+Use **`compose.dokploy.yaml`** as the Compose path in Dokploy instead of
+`compose.yaml`. It initializes the config automatically in a named Docker volume;
+no files need to exist in the server's Git checkout.
+
+Set these variables in Dokploy's Environment settings before deployment:
+
+```env
+CPA_MANAGEMENT_KEY=replace-with-a-long-random-management-secret
+CLIENT_API_KEY=replace-with-a-long-random-client-key
+KEEPER_LOGIN_PASSWORD=replace-with-a-private-dashboard-password
+CPA_PUBLIC_URL=https://api.your-domain.com
+TZ=UTC
+```
+
+Configure HTTPS domains in Dokploy for `cli-proxy-api` port `8317` and
+`cpa-usage-keeper` port `8080`. Management is at `/management.html` on the API
+domain. Keeper is at the root of its domain. The app base URL is the API domain
+plus `/v1`. Attach both services to the network required by Dokploy's domain
+routing if your Dokploy installation does not do so automatically.
+
+The initializer only creates config on first deployment. Later redeployments
+preserve panel edits, provider credentials, and client keys. Changing
+`CPA_MANAGEMENT_KEY` or `CLIENT_API_KEY` in Dokploy Environment alone does not
+change an already-initialized config. Update the persisted config too when
+rotating the management secret; manage client keys through the panel.
+Do not remove the named volumes unless you intend to erase their data.
+
+### Local commands
+
 ```sh
 docker compose ps
 docker compose logs --tail=100 -f
